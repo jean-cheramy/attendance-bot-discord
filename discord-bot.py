@@ -41,41 +41,56 @@ async def send_attendance_message():
     Send a message in the remote-attendance channel with counts
     of members in Bouman-9 voice channels.
     """
-    if not bot.guilds:
-        print("No guilds available.")
-        return
-    guild = bot.guilds[0]
-    role = discord.utils.get(guild.roles, name=ROLE_NAME)
-    category = discord.utils.get(guild.categories, name=CATEGORY_NAME)
-    channel = discord.utils.get(guild.text_channels, name=CHANNEL_NAME)
-    if not role or not category or not channel:
-        print("Role, category, or channel not found.")
-        return
+    try:
+        if not bot.guilds:
+            print("No guilds available.")
+            return
+        guild = bot.guilds[0]
+        role = discord.utils.get(guild.roles, name=ROLE_NAME)
+        category = discord.utils.get(guild.categories, name=CATEGORY_NAME)
+        channel = discord.utils.get(guild.text_channels, name=CHANNEL_NAME)
+        if not role or not category or not channel:
+            print("Role, category, or channel not found.")
+            return
 
-    voice_channels = [c for c in category.channels if isinstance(c, discord.VoiceChannel)]
-    members_in_voice = set()
-    for vc in voice_channels:
-        for m in vc.members:
-            members_in_voice.add(m.id)
-    count = max(0, len(members_in_voice) - 1)
-    await channel.send(f"- @jeanaicoach - Learners in Bouman-9 voice channels: {count}")
+        voice_channels = [c for c in category.channels if isinstance(c, discord.VoiceChannel)]
+        members_in_voice = set()
+        for vc in voice_channels:
+            for m in vc.members:
+                members_in_voice.add(m.id)
+        count = max(0, len(members_in_voice) - 1)
+
+        await channel.send(f"- @jeanaicoach - Learners in Bouman-9 voice channels: {count}")
+        print(f"Attendance message sent at {datetime.now()}")
+    except discord.Forbidden:
+        print("Bot does not have permission to send messages in the channel.")
+    except Exception as e:
+        print(f"Error sending attendance message: {e}")
 
 async def attendance_scheduler():
     """
     Scheduler that waits until morning random slot and afternoon random slot,
     sends the attendance messages, then stops (bot exits at the end).
     """
-    today = datetime.now().date()
-    morning_time = random_time_between(9, 30, 12, 30, ref_date=today)
-    afternoon_time = random_time_between(14, 0, 16, 45, ref_date=today)
+    try:
+        today = datetime.now().date()
+        morning_time = random_time_between(9, 30, 12, 30, ref_date=today)
+        afternoon_time = random_time_between(14, 0, 16, 45, ref_date=today)
 
-    for event_time in [morning_time, afternoon_time]:
-        sleep_seconds = (event_time - datetime.now()).total_seconds()
-        if sleep_seconds > 0:
-            await asyncio.sleep(sleep_seconds)
-            await send_attendance_message()
-    await bot.close()
+        for event_time in [morning_time, afternoon_time]:
+            sleep_seconds = (event_time - datetime.now()).total_seconds()
+            if sleep_seconds > 0:
+                print(f"Sleeping until {event_time}")
+                await asyncio.sleep(sleep_seconds)
+                await send_attendance_message()
+    except Exception as e:
+        print(f"Scheduler error: {e}")
+    finally:
+        await bot.close()
+        print("Bot has exited after sending attendance messages.")
 
 if __name__ == '__main__':
     token = os.getenv("DISCORD_TOKEN")
+    if not token:
+        raise ValueError("DISCORD_TOKEN environment variable not set.")
     bot.run(token)
