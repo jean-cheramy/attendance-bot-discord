@@ -76,7 +76,13 @@ async def attendance_scheduler():
     sends the attendance messages, then stops (bot exits at the end).
     """
     try:
-        today = datetime.now(BRUSSELS).date()
+        now = datetime.now(BRUSSELS)
+        weekday = now.weekday()  # 0 = Monday, 6 = Sunday
+        if weekday >= 5:
+            print("Today is Saturday or Sunday. Exiting without sending messages.")
+            return
+
+        today = now.date()
         morning_time = random_time_between(9, 30, 12, 30, ref_date=today)
         afternoon_time = random_time_between(14, 0, 16, 45, ref_date=today)
 
