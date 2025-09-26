@@ -63,7 +63,12 @@ async def send_attendance_message():
                 members_in_voice.add(m.id)
         count = max(0, len(members_in_voice) - 1)
 
-        await channel.send(f"- @jeanaicoach - Learners in Bouman-9 voice channels: {count}")
+        member = guild.get_member(1283510701763068018)
+        if member:
+            await channel.send(f"- {member.mention} - Learners in Bouman-9 voice channels: {count}")
+        else:
+            await channel.send(f"- Learners in Bouman-9 voice channels: {count}")
+
         print(f"Attendance message sent at {datetime.now(BRUSSELS)}")
     except discord.Forbidden:
         print("Bot does not have permission to send messages in the channel.")
