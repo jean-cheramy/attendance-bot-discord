@@ -13,18 +13,19 @@ intents.members = True
 intents.voice_states = True
 intents.message_content = True
 
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 CHANNEL_NAME = "remote-attendance"
 ROLE_NAME = "Bouman-9"
 CATEGORY_NAME = "Bouman-9"
+USER_ID = 1283510701763068018  # ton ID Discord
 
 @bot.event
 async def on_ready():
     """
-    Called when the bot is ready. Starts the attendance scheduler.
+    Called when the bot is ready. Starts the infinite attendance scheduler.
     """
-    print(f'Connected as {bot.user} (ID {bot.user.id})')
+    print(f"Connected as {bot.user} (ID {bot.user.id})")
     bot.loop.create_task(attendance_scheduler())
 
 def random_time_between(start_hour, start_minute, end_hour, end_minute, ref_date=None):
@@ -63,12 +64,8 @@ async def send_attendance_message():
                 members_in_voice.add(m.id)
         count = max(0, len(members_in_voice) - 1)
 
-        member = guild.get_member(1283510701763068018)
-        if member:
-            await channel.send(f"- {member.mention} - Learners in Bouman-9 voice channels: {count}")
-        else:
-            await channel.send(f"- Learners in Bouman-9 voice channels: {count}")
-
+        mention = f"<@{USER_ID}>"
+        await channel.send(f"- {mention} - Learners in Bouman-9 voice channels: {count}")
         print(f"Attendance message sent at {datetime.now(BRUSSELS)}")
     except discord.Forbidden:
         print("Bot does not have permission to send messages in the channel.")
@@ -77,33 +74,35 @@ async def send_attendance_message():
 
 async def attendance_scheduler():
     """
-    Scheduler that waits until morning random slot and afternoon random slot,
-    sends the attendance messages, then stops (bot exits at the end).
+    Infinite scheduler: runs every day at random morning and afternoon slots
+    (only Tuesday, Thursday, Friday).
     """
-    try:
+    while True:
         now = datetime.now(BRUSSELS)
         weekday = now.weekday()  # 0 = Monday, 6 = Sunday
-        if weekday >= 5:
-            print("Today is Saturday or Sunday. Exiting without sending messages.")
-            return
 
-        today = now.date()
-        morning_time = random_time_between(9, 30, 12, 30, ref_date=today)
-        afternoon_time = random_time_between(14, 0, 16, 45, ref_date=today)
+        if weekday in [1, 3, 4]:  # Tuesday, Thursday, Friday
+            today = now.date()
+            morning_time = random_time_between(9, 15, 12, 30, ref_date=today)
+            afternoon_time = random_time_between(14, 0, 16, 45, ref_date=today)
 
-        for event_time in [morning_time, afternoon_time]:
-            sleep_seconds = (event_time - datetime.now(BRUSSELS)).total_seconds()
-            if sleep_seconds > 0:
-                print(f"Sleeping until {event_time}")
-                await asyncio.sleep(sleep_seconds)
-                await send_attendance_message()
-    except Exception as e:
-        print(f"Scheduler error: {e}")
-    finally:
-        await bot.close()
-        print("Bot has exited after sending attendance messages.")
+            for event_time in [morning_time, afternoon_time]:
+                sleep_seconds = (event_time - datetime.now(BRUSSELS)).total_seconds()
+                if sleep_seconds > 0:
+                    print(f"Sleeping until {event_time}")
+                    await asyncio.sleep(sleep_seconds)
+                    await send_attendance_message()
+        else:
+            print(f"Skipping {now.strftime('%A')} - not a scheduled day.")
 
-if __name__ == '__main__':
+        # sleep until tomorrow at 00:05 Brussels time
+        tomorrow = (now + timedelta(days=1)).date()
+        midnight = datetime.combine(tomorrow, time(0, 5, tzinfo=BRUSSELS))
+        sleep_seconds = (midnight - datetime.now(BRUSSELS)).total_seconds()
+        print(f"Sleeping until {midnight}")
+        await asyncio.sleep(sleep_seconds)
+
+if __name__ == "__main__":
     token = os.getenv("DISCORD_TOKEN")
     if not token:
         raise ValueError("DISCORD_TOKEN environment variable not set.")
