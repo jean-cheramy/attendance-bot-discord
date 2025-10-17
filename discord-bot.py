@@ -75,7 +75,7 @@ async def send_attendance_message():
 async def attendance_scheduler():
     """
     Infinite scheduler: runs every day at random morning and afternoon slots
-    (only Tuesday, Thursday, Friday).
+    (only Tuesday, Thursday, Friday). Excludes 11:00–11:15 and 15:00–15:15.
     """
     while True:
         now = datetime.now(BRUSSELS)
@@ -83,8 +83,18 @@ async def attendance_scheduler():
 
         if weekday in [1, 3, 4]:  # Tuesday, Thursday, Friday
             today = now.date()
-            morning_time = random_time_between(9, 15, 12, 30, ref_date=today)
-            afternoon_time = random_time_between(14, 0, 16, 45, ref_date=today)
+
+            # Generate morning time excluding 11:00–11:15
+            while True:
+                morning_time = random_time_between(9, 15, 12, 30, ref_date=today)
+                if not (morning_time.hour == 11 and 0 <= morning_time.minute < 15):
+                    break
+
+            # Generate afternoon time excluding 15:00–15:15
+            while True:
+                afternoon_time = random_time_between(14, 0, 16, 45, ref_date=today)
+                if not (afternoon_time.hour == 15 and 0 <= afternoon_time.minute < 15):
+                    break
 
             for event_time in [morning_time, afternoon_time]:
                 sleep_seconds = (event_time - datetime.now(BRUSSELS)).total_seconds()
