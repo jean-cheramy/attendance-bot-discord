@@ -18,7 +18,8 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
-async def on_ready():
+async def on_ready() -> None:
+    """Runs on bot connection; logs info and starts attendance, heartbeat, and health server tasks."""
     log.info(f"Connected as {bot.user} (ID {bot.user.id})")
     bot.loop.create_task(attendance_scheduler(bot))
     bot.loop.create_task(heartbeat())

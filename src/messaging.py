@@ -5,7 +5,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
-async def send_attendance_message(bot):
+async def send_attendance_message(bot) -> None:
     """Send a message in the configured channel with counts of members in the configured category."""
     CHANNEL_NAME = os.getenv("CHANNEL_NAME")
     ROLE_NAME = os.getenv("ROLE_NAME")

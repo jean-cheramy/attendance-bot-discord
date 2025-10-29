@@ -13,7 +13,7 @@ The bot **randomly checks the number of learners connected to the voice channels
 - Sends messages **twice a day**: once in the morning and once in the afternoon at random times.  
 - **Does not run on weekends** to avoid unnecessary activity.  
 - Fully logs actions for debugging and tracking.
-- Deployed as a free app on [Railway](https://railway.com)
+- Deployed as a **Container App** on Azure using GitHub Actions
 
 ## Usage
 
@@ -29,8 +29,8 @@ The bot will automatically send attendance messages at random times during the d
 
 ## Notes
 
-- Ensure the bot has access to the **“Bouman-9”** category and the **“remote-attendance”** text channel.  
+- Ensure the bot has access to the category and the text channel.  
 - All scheduling uses **Brussels time (UTC+1/UTC+2 with DST)**.  
-- The bot automatically **skips weekends (Saturday and Sunday)**.  
+- The bot automatically **skips weekends (Saturday and Sunday) and campus days (Monday/Wednesday)**.  
 - The bot only counts learners in voice channels; it does not track text activity.  
 - All actions are logged to the console for monitoring and debugging.

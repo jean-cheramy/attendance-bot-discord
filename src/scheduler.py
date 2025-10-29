@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta, time, date
 import random
 from zoneinfo import ZoneInfo
 import os
@@ -9,7 +9,13 @@ import logging
 log = logging.getLogger(__name__)
 BRUSSELS = ZoneInfo("Europe/Brussels")
 
-def random_time_between(start_hour, start_minute, end_hour, end_minute, ref_date=None):
+def random_time_between(
+    start_hour: int,
+    start_minute: int,
+    end_hour: int,
+    end_minute: int,
+    ref_date: date | None = None
+    ) -> datetime:
     """Return a random datetime between start and end on ref_date in Brussels time."""
     if ref_date is None:
         ref_date = datetime.now(BRUSSELS).date()
@@ -19,7 +25,8 @@ def random_time_between(start_hour, start_minute, end_hour, end_minute, ref_date
     random_seconds = random.randint(0, max(delta_seconds, 0))
     return start + timedelta(seconds=random_seconds)
 
-async def attendance_scheduler(bot):
+async def attendance_scheduler(bot) -> None:
+    """Schedules and sends attendance messages at random times on selected weekdays."""
     log.info("Attendance scheduler started")
     while True:
         now = datetime.now(BRUSSELS)
