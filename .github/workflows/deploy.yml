@@ -23,7 +23,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ vars.CONTAINER_IMAGE_NAME }}:latest .
+          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ vars.CONTAINER_IMAGE_NAME }}:latest ./src
 
       - name: Push Docker image
         run: |
