@@ -1,0 +1,42 @@
+name: Deploy Discord Bot to Azure Container Apps
+
+on:
+  push:
+    branches: [cicd]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to Azure Container Registry
+        run: az acr login --name ${{ secrets.ACR_NAME }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ vars.CONTAINER_IMAGE_NAME }}:latest .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/${{ vars.CONTAINER_IMAGE_NAME }}:latest
+
+      - name: Deploy to Azure Container App
+        run: |
+          az containerapp update \
+            --name ${{ vars.CONTAINER_APP_NAME }} \
+            --resource-group ${{ vars.RESOURCE_GROUP }} \
+            --yaml containerapp.yaml \
+            --set-env-vars DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }} \
+            --set-env-vars CHANNEL_NAME=${{ vars.CHANNEL_NAME }} \
+            --set-env-vars ROLE_NAME=${{ vars.ROLE_NAME }} \
+            --set-env-vars CATEGORY_NAME=${{ vars.CATEGORY_NAME }} \
+            --set-env-vars USER_ID=${{ vars.USER_ID }} \
+            --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ vars.CONTAINER_IMAGE_NAME }}:latest
